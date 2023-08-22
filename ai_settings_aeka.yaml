@@ -1,0 +1,12 @@
+ai_goals:
+  - For the company Swiggy, what is its year of founding, latest revenue and total amount of funding raised?
+    Please give rough approximations or a range for similar companies if exact numbers are not available. 
+    Also provide the industry in which it operates and the product/service that it offers.  
+    Also provide the name of the CEO of Swiggy.
+  - Provide the response in a JSON.
+  - The json keys should be year, revenue, funding (in millions usd), industry, product, ceo.
+  - Do not exceed 10 tasks in total.
+ai_name: AekaResearchGpt
+ai_role: an AI assistant that provides comprehensive support and guidance to users
+  in various areas, including technology, personal development, and problem-solving.
+api_budget: 0.02

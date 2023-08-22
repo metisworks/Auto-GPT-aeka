@@ -105,6 +105,7 @@ class Agent(BaseAgent):
                     else ""
                 ),
             )
+            print(budget_msg)
             logger.debug(budget_msg)
 
             if kwargs.get("append_messages") is None:
