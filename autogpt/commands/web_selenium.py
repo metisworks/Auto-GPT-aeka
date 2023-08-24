@@ -67,7 +67,7 @@ class BrowsingError(CommandExecutionError):
     },
 )
 @validate_url
-def browse_website(url: str, question: str, agent: Agent) -> str:
+def browse_website(url: str, question: str, agent: Agent = None, llm_name:str=None, config:Config=None) -> str:
     """Browse a website and return the answer and links to the user
 
     Args:
@@ -79,21 +79,29 @@ def browse_website(url: str, question: str, agent: Agent) -> str:
     """
     driver = None
     try:
-        driver = open_page_in_browser(url, agent.config)
+        if agent is None:
+            config = config
+            llm_name = llm_name
+        else:
+            config = agent.config
+            llm_name = agent.llm.name
+
+        driver = open_page_in_browser(url, config)
 
         text = scrape_text_with_selenium(driver)
         links = scrape_links_with_selenium(driver, url)
 
         if not text:
             return f"Website did not contain any text.\n\nLinks: {links}"
-        elif count_string_tokens(text, agent.llm.name) > TOKENS_TO_TRIGGER_SUMMARY:
-            text = summarize_memorize_webpage(url, text, question, agent, driver)
+        elif count_string_tokens(text, llm_name) > TOKENS_TO_TRIGGER_SUMMARY:
+            text = summarize_memorize_webpage(url, text, question, config, driver)
 
         # Limit links to LINKS_TO_RETURN
         if len(links) > LINKS_TO_RETURN:
             links = links[:LINKS_TO_RETURN]
 
-        return f"Answer gathered from website: {text}\n\nLinks: {links}"
+        # return f"Answer gathered from website: {text}\n\nLinks: {links}"
+        return text
     except WebDriverException as e:
         # These errors are often quite long and include lots of context.
         # Just grab the first line.
@@ -233,11 +241,11 @@ def close_browser(driver: WebDriver) -> None:
 
 
 def summarize_memorize_webpage(
-    url: str,
-    text: str,
-    question: str,
-    agent: Agent,
-    driver: Optional[WebDriver] = None,
+        url: str,
+        text: str,
+        question: str,
+        config: Config,
+        driver: Optional[WebDriver] = None,
 ) -> str:
     """Summarize text using the OpenAI API
 
@@ -256,8 +264,8 @@ def summarize_memorize_webpage(
     text_length = len(text)
     logger.info(f"Text length: {text_length} characters")
 
-    memory = get_memory(agent.config)
+    memory = get_memory(config)
 
-    new_memory = MemoryItem.from_webpage(text, url, agent.config, question=question)
+    new_memory = MemoryItem.from_webpage(text, url, config, question=question)
     memory.add(new_memory)
     return new_memory.summary

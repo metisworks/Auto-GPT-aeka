@@ -30,7 +30,7 @@ DUCKDUCKGO_MAX_ATTEMPTS = 3
     },
     aliases=["search"],
 )
-def web_search(query: str, agent: Agent, num_results: int = 8) -> str:
+def web_search(query: str, agent: Agent= None, num_results: int = 8) -> str:
     """Return the results of a Google search
 
     Args:
@@ -57,6 +57,7 @@ def web_search(query: str, agent: Agent, num_results: int = 8) -> str:
         attempts += 1
 
     results = json.dumps(search_results, ensure_ascii=False, indent=4)
+    print("here")
     return safe_google_results(results)
 
 

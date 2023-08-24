@@ -94,8 +94,8 @@ def summarize_text(
 
     if question:
         instruction = (
-            f'include any information that can be used to answer the question "{question}". '
-            "Do not directly answer the question itself"
+            f'answer this question "{question}". '
+            "Try to directly answer the question itself in the format specified"
         )
 
     summarization_prompt = ChatSequence.for_model(model)
@@ -105,18 +105,19 @@ def summarize_text(
 
     # reserve 50 tokens for summary prompt, 500 for the response
     max_chunk_length = _max_chunk_length(model) - 550
-    logger.info(f"Max chunk length: {max_chunk_length} tokens")
+    logger.debug(f"Max chunk length: {max_chunk_length} tokens")
 
     if not must_chunk_content(text, model, max_chunk_length):
         # summarization_prompt.add("user", text)
         summarization_prompt.add(
             "user",
-            "Write a concise summary of the following text"
+            # "Write a concise summary of the following text"
+            " Consider yourself as an analyst."
             f"{f'; {instruction}' if instruction is not None else ''}:"
             "\n\n\n"
             f'LITERAL TEXT: """{text}"""'
             "\n\n\n"
-            "CONCISE SUMMARY: The text is best summarized as"
+            "CONCISE ANSWER: The question is best answered as."
             # "Only respond with a concise summary or description of the user message."
         )
 
@@ -142,7 +143,7 @@ def summarize_text(
         summary, _ = summarize_text(chunk, config, instruction)
         summaries.append(summary)
 
-    logger.info(f"Summarized {len(chunks)} chunks")
+    logger.debug(f"Summarized {len(chunks)} chunks")
 
     summary, _ = summarize_text("\n\n".join(summaries), config)
     return summary.strip(), [

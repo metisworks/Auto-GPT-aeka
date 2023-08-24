@@ -42,7 +42,7 @@ class Logger(metaclass=Singleton):
 
         # Create a handler for console without typing simulation
         self.console_handler = ConsoleHandler()
-        self.console_handler.setLevel(logging.DEBUG)
+        self.console_handler.setLevel(logging.INFO)
         self.console_handler.setFormatter(console_formatter)
 
         # Info handler in activity.log
