@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
+import PyPDF2
+import requests
+import io
+
+
 COMMAND_CATEGORY = "web_browse"
 COMMAND_CATEGORY_TITLE = "Web Browsing"
 
 import logging
 import re
+
 from pathlib import Path
 from sys import platform
 from typing import TYPE_CHECKING, Optional, Type
 
+import urllib.request
 from bs4 import BeautifulSoup
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -88,11 +95,24 @@ def browse_website(url: str, question: str, agent: Agent = None, llm_name:str=No
 
         driver = open_page_in_browser(url, config)
 
-        text = scrape_text_with_selenium(driver)
+        ##
+        page_extension = url.split("/")[-1].split('.')[-1]
+        if page_extension == "pdf":
+
+            response = requests.get(url)
+            f = io.BytesIO(response.content)
+            reader = PyPDF2.PdfReader(f)
+            pages = reader.pages
+            text = "".join([page.extract_text() for page in pages])
+        ##
+        else:
+            text = scrape_text_with_selenium(driver)
+
         links = scrape_links_with_selenium(driver, url)
 
         if not text:
-            return f"Website did not contain any text.\n\nLinks: {links}"
+            # return f"Website did not contain any text.\n\nLinks: {links}"
+            return f"No browsable text found at {links}"
         elif count_string_tokens(text, llm_name) > TOKENS_TO_TRIGGER_SUMMARY:
             text = summarize_memorize_webpage(url, text, question, config, driver)
 

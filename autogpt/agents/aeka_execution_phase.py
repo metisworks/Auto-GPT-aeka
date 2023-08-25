@@ -9,6 +9,7 @@ class AekaExecutionPhaseBase(ABC):
         self.local_context = None
         self.global_context = None
         self.command = None
+        self.input_goals = None
 
     @abstractmethod
     def execute_phase(self, input_list: list,*args,**kwargs):

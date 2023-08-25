@@ -10,13 +10,14 @@ class ExecutionPlan(ABC):
         self.plan_name = plan_name
         self.phases = None
         self.current_phase = None
+        self.phase_iterator = None
 
     @abstractmethod
     def get_phase(self):
         pass
 
     @abstractmethod
-    def next_phase(self):
+    def current_phase_and_inline(self):
         pass
 
     @abstractmethod
@@ -24,5 +25,5 @@ class ExecutionPlan(ABC):
         pass
 
     @abstractmethod
-    def setup_phases(self, phase_list: list[AekaExecutionPhaseBase]):
+    def setup_phases(self, phase_list: list[AekaExecutionPhaseBase] = None, goals_list: {int: list[str]} = None):
         pass

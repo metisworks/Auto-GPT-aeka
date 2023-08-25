@@ -1,5 +1,5 @@
 # 'dev' or 'release' container build
-ARG BUILD_TYPE=release
+ARG BUILD_TYPE=dev
 
 # Use an official Python base image from the Docker Hub
 FROM python:3.10-slim AS autogpt-base
@@ -24,7 +24,14 @@ ENV PATH="$PATH:/root/.local/bin"
 COPY requirements.txt .
 
 # Set the entrypoint
-ENTRYPOINT ["uvicorn", "web.fast-app:app", "--host", "0.0.0.0", "--port","5000"]
+ENTRYPOINT ["python", "-m", "autogpt", "--install-plugin-deps"]
+
+# dev build -> include everything
+FROM autogpt-base as autogpt-dev
+RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /app
+ONBUILD COPY . ./
+
 # release build -> include bare minimum
 FROM autogpt-base as autogpt-release
 RUN sed -i '/Items below this point will not be included in the Docker Image/,$d' requirements.txt && \
@@ -33,7 +40,6 @@ WORKDIR /app
 ONBUILD COPY autogpt/ ./autogpt
 ONBUILD COPY scripts/ ./scripts
 ONBUILD COPY plugins/ ./plugins
-ONBUILD COPY web/ ./web
 ONBUILD COPY prompt_settings.yaml ./prompt_settings.yaml
 ONBUILD RUN mkdir ./data
 

@@ -19,10 +19,10 @@ class AekaExecutionSearchPhase(AekaExecutionPhaseBase):
         self.credentials = None
 
     def setup(self, local_context: AekaExecutionContext = None, global_context: AekaExecutionContext = None,
-              credentials: dict = None):
+              input_goals: [str] = None):
         self.local_context = local_context
         self.global_context = global_context
-        self.credentials = credentials
+        self.input_goals = input_goals
 
     def execute_phase(self, input_list: list, *args, **kwargs):
         '''
@@ -45,7 +45,10 @@ class AekaExecutionSearchPhase(AekaExecutionPhaseBase):
         if self.local_context:
             execution_messages += self.local_context.messages
 
-        prompt = f"For searching the web for the topic as {' '.join(input_list)}. Please generate a concise " \
+        if input_list:
+            self.input_goals = input_list
+
+        prompt = f"For searching the web for the topic as {' '.join(self.input_goals)}. Please generate a concise " \
                  f" search query that can be fed to a search engine."
         message = {
             "role": "user",
@@ -76,7 +79,7 @@ def execute_prompt_chat(messages, **kwargs):
     chat_completion_kwargs = {
         "model": GPT_3_MODEL,
         "temperature": 0,
-        "api_key": "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",
+        "api_key": "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",
         "api_base": None,
         "organization": None
     }
