@@ -1,13 +1,10 @@
 from autogpt.agents.aeka_execution_phase import AekaExecutionPhaseBase
+from autogpt.agents.utils.util_method import execute_prompt_chat
 from autogpt.commands.web_search import web_search
 from autogpt.core.aeka_core.aekaExecutionContext import AekaExecutionContext
-from autogpt.llm.base import ResponseMessageDict
-from autogpt.llm.providers.openai import create_chat_completion
 from autogpt.logs import logger
 import json
 
-GPT_4_MODEL = "gpt-4"
-GPT_3_MODEL = "gpt-3.5-turbo"
 
 
 class AekaExecutionSearchPhase(AekaExecutionPhaseBase):
@@ -17,14 +14,16 @@ class AekaExecutionSearchPhase(AekaExecutionPhaseBase):
         self.phase_description = "Phase for doing a search"
         self.command = web_search
         self.credentials = None
+        self.num_result =1
 
     def setup(self, local_context: AekaExecutionContext = None, global_context: AekaExecutionContext = None,
-              input_goals: [str] = None):
+              input_goals: [str] = None, num_result:int = 1 ):
         self.local_context = local_context
         self.global_context = global_context
         self.input_goals = input_goals
+        self.num_result = num_result
 
-    def execute_phase(self, input_list: list, *args, **kwargs):
+    def execute_phase(self, input_list: list,*args, **kwargs):
         '''
 
         Args:
@@ -61,11 +60,9 @@ class AekaExecutionSearchPhase(AekaExecutionPhaseBase):
         search_term = execute_prompt_chat(execution_messages)
 
         # 2. search
-        search_result = self.command(search_term, None)
+        search_result = self.command(search_term, None,num_results=self.num_result)
         search_result_obj = json.loads(search_result)
-        print(f" { search_result = }")
-        for res_obj in search_result_obj:
-            print(f"{ res_obj = }")
+        logger.debug(f" { search_result = }")
         self.result = search_result_obj
 
     def get_result(self):
@@ -73,25 +70,6 @@ class AekaExecutionSearchPhase(AekaExecutionPhaseBase):
 
     def update_and_return_global_context(self):
         pass
-
-
-def execute_prompt_chat(messages, **kwargs):
-    chat_completion_kwargs = {
-        "model": GPT_3_MODEL,
-        "temperature": 0,
-        "api_key": "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",
-        "api_base": None,
-        "organization": None
-    }
-    results = create_chat_completion(messages=messages,**chat_completion_kwargs)
-    print(f"{results = }")
-    if hasattr(results, "error"):
-        logger.error(results.error)
-        raise RuntimeError(results.error)
-    first_message: ResponseMessageDict = results.choices[0].message
-    content: str | None = first_message.get("content")
-    content = content.strip('\\').strip('\"')
-    return content
 
 
 if __name__ == "__main__":
@@ -103,4 +81,3 @@ if __name__ == "__main__":
     goals = ["Find the luxury car market  size in usd in india for 2023",
              "Please prioritise govt agencies pdf reports and reputed statistic sites."]
     exec_phase.execute_phase(input_list=goals)
-    print("hello")

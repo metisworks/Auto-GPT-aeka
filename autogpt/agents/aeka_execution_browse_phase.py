@@ -3,12 +3,11 @@ from pathlib import Path
 
 from autogpt.agents.aeka_execution_phase import AekaExecutionPhaseBase
 from autogpt.agents.aeka_execution_search_phase import AekaExecutionSearchPhase
+from autogpt.agents.utils.util_method import OPENAI_KEY, GPT_3_MODEL
 from autogpt.commands.web_selenium import browse_website
-from autogpt.config import ConfigBuilder, Config
+from autogpt.config import ConfigBuilder
 from autogpt.core.aeka_core.aekaExecutionContext import AekaExecutionContext
-
-GPT_4_MODEL = "gpt-4"
-GPT_3_MODEL = "gpt-3.5-turbo"
+from autogpt.logs import logger
 
 
 class AekaExecutionBrowsePhase(AekaExecutionPhaseBase):
@@ -25,9 +24,10 @@ class AekaExecutionBrowsePhase(AekaExecutionPhaseBase):
         self.config = ConfigBuilder().build_config_from_env(path)
         self.config.memory_backend = "no_memory"
         self.config.workspace_path = path
+        self.config.openai_api_key = OPENAI_KEY
 
     def execute_phase(self, input_list: list, *args, **kwargs):
-        '''
+        """
 
         Args:
             *args:
@@ -36,8 +36,8 @@ class AekaExecutionBrowsePhase(AekaExecutionPhaseBase):
 
         Returns:
 
-        '''
-        print(f" {input_list = }")
+        """
+        # print(f" {input_list = }")
         goals_list = kwargs.get("goals", None)
 
         if not self.input_goals:
@@ -47,17 +47,22 @@ class AekaExecutionBrowsePhase(AekaExecutionPhaseBase):
                 self.input_goals = goals_list
 
         goal_string = ".".join(self.input_goals)
-        print(f" {goal_string = } ")
         answer_list = []
 
         for result_details in input_list:
-            print(f"{ result_details = }")
             website_url = result_details['href']
-            browse_answer = self.command(url=website_url,
-                                         question=goal_string,
-                                         llm_name=GPT_3_MODEL,
-                                         config=self.config)
-            print(f" {browse_answer = }")
+            try:
+                browse_answer = self.command(url=website_url,
+                                             question=goal_string,
+                                             llm_name=GPT_3_MODEL,
+                                             config=self.config)
+            except Exception as e:
+                browse_answer = {
+                    "error": "Couldn't browse site ",
+                    "link": website_url,
+                    "message": str(e)
+                }
+
             try:
                 answer_json = json.loads(browse_answer)
             except Exception as e:
@@ -66,10 +71,9 @@ class AekaExecutionBrowsePhase(AekaExecutionPhaseBase):
                 "answer": answer_json,
                 "link": website_url
             }
-            print(f"{browse_answer = }")
             answer_list.append(answer)
 
-        print(f" { answer_list = }")
+        logger.debug(f" { answer_list = }")
         self.result = answer_list
         return answer_list
 
@@ -95,7 +99,6 @@ if __name__ == "__main__":
     goals = ["Find the luxury car market  size in usd in india for 2023",
              "Please prioritise govt agencies reports and reputed statistic sites."]
     exec_phase.execute_phase(input_list=goals)
-    print("hello")
     browse_executor = AekaExecutionBrowsePhase()
     res = exec_phase.get_result()
     context = AekaExecutionContext(context_name="Local Context")

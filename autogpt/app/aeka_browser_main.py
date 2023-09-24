@@ -167,7 +167,6 @@ def run_research(agent: Agent, cycle_count):
             if command_name == "browse_website":
                 browse_cycle += 1
 
-        print(" =-=-" * 20)
         logger.typewriter_log(f"MAINTAINER", Fore.MAGENTA, f"{current_cycle = }   | {cycles_remaining = }")
 
 

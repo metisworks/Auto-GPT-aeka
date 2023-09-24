@@ -4,7 +4,10 @@ from typing import List, Dict
 from fastapi import FastAPI, Body, Request
 from starlette.middleware.cors import CORSMiddleware
 from web.routes import aeka_plan_executor_api
-app = FastAPI()
+app = FastAPI(docs_url="/vulcan/docs",
+              redoc_url="/vulcan/redoc"
+              )
+
 origins = [
     "http://localhost.tiangolo.com",
     "https://localhost.tiangolo.com",
@@ -24,13 +27,18 @@ def hello():
     return "hello"
 
 
+@app.get("/vulcan/ping")
+def hello():
+    return "pong"
+
+
 @app.post("/vulcan/body_test")
 def btest(goals_list: Annotated[Dict, Body()],
           pv: Annotated[int, Body()],
           tl: List[str] = Body()):
     return {"Body found": goals_list, "pv": pv, "tl": tl}
 
-#
-# if __name__ == "__main__":
-#     from uvicorn import run
-#       run("fast-app:app", host="127.0.0.1", port=5000, reload=False, log_level="info")
+
+if __name__ == "__main__":
+    from uvicorn import run
+    run("web-app:app", host="127.0.0.1", port=5000,  reload=False, log_level="debug")

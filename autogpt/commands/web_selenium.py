@@ -5,7 +5,7 @@ from __future__ import annotations
 import PyPDF2
 import requests
 import io
-
+from autogpt.commands.summariser import parse_and_tokenise
 
 COMMAND_CATEGORY = "web_browse"
 COMMAND_CATEGORY_TITLE = "Web Browsing"
@@ -96,9 +96,16 @@ def browse_website(url: str, question: str, agent: Agent = None, llm_name:str=No
         driver = open_page_in_browser(url, config)
 
         ##
+        url_split_list = url.split("/")
+        is_pdf = False
         page_extension = url.split("/")[-1].split('.')[-1]
-        if page_extension == "pdf":
+        for term_v in url_split_list:
+            last_term_here = term_v.split(".")
+            if last_term_here and len(last_term_here)>=2:
+                if last_term_here[-1] == "pdf":
+                    is_pdf = True
 
+        if is_pdf:
             response = requests.get(url)
             f = io.BytesIO(response.content)
             reader = PyPDF2.PdfReader(f)
@@ -109,7 +116,6 @@ def browse_website(url: str, question: str, agent: Agent = None, llm_name:str=No
             text = scrape_text_with_selenium(driver)
 
         links = scrape_links_with_selenium(driver, url)
-
         if not text:
             # return f"Website did not contain any text.\n\nLinks: {links}"
             return f"No browsable text found at {links}"
@@ -278,6 +284,11 @@ def summarize_memorize_webpage(
     Returns:
         str: The summary of the text
     """
+    text = parse_and_tokenise(text)
+    print("-----"*20)
+    print(f"for {url = }\n  and  \n{question = } \nscraped text here {text = }")
+    print("-----"*20)
+
     if not text:
         raise ValueError("No text to summarize")
 

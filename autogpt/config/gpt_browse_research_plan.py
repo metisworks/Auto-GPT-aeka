@@ -22,20 +22,22 @@ class GptBrowseResearchPlan(ExecutionPlan):
     def create_from_yaml(self, file: Path | str):
         pass
 
-    def setup_phases(self, phase_list: list[AekaExecutionPhaseBase] = None, goals_list: {int: list[str]} = None):
+    def setup_phases(self, phase_list: list[AekaExecutionPhaseBase] = None, goals_list: {int: list[str]} = None,
+                     num_result=1):
         if self.phases is None:
             self.phases = []
         if phase_list:
             self.phases += phase_list
 
         global_context = AekaExecutionContext(context_name="Global Context")
-        global_context.add_message_to_context("Think of yourself as a research analyst", "user")
+        # global_context.add_message_to_context("Think of yourself as a research analyst", "user")
 
         # create context and phase for search
         goals_for_phase = self.get_goals_for_phase(goals_list, "0")
         search_phase = AekaExecutionSearchPhase()
         search_phase.setup(local_context=AekaExecutionContext(context_name="Local Context"),
-                           global_context=global_context, input_goals=goals_for_phase)
+                           global_context=global_context, input_goals=goals_for_phase,
+                           num_result=num_result)
         self.phases.append(search_phase)
 
         # add phase
@@ -72,4 +74,3 @@ if __name__ == "__main__":
     }
     researchPlan = GptBrowseResearchPlan()
     researchPlan.setup_phases(goals_list=goals)
-

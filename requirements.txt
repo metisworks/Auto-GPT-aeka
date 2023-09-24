@@ -28,15 +28,27 @@ click~=8.1.7
 charset-normalizer>=3.1.0
 spacy>=3.0.0,<4.0.0
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0-py3-none-any.whl
+# en-core-web-md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.6.0/en_core_web_md-3.6.0-py3-none-any.whl
 prompt_toolkit>=3.0.38
 pydantic~=1.10.12
 inflection~=0.5.1
 agbenchmark~=0.0.2
 agent-protocol>=0.1.1
 
+
+# BERT
+# bert-extractive-summarizer==0.10.1
+# torch==2.0.1
+# gensim==4.3.2
+# nltk==3.8.1
+# sentencepiece==0.1.99
+
 # web server
 fastapi~=0.100.1
 uvicorn~=0.23.2
+mongoengine==0.27.0
+celery==5.3.1
+transformers==4.33.0
 
 ##Dev
 coverage
@@ -73,6 +85,4 @@ pytest-mock
 vcrpy @ git+https://github.com/Significant-Gravitas/vcrpy.git@master
 pytest-recording
 pytest-xdist
-
-starlette~=0.27.0
 Jinja2~=3.1.2

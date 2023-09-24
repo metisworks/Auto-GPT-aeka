@@ -94,8 +94,7 @@ def summarize_text(
 
     if question:
         instruction = (
-            f'answer this question "{question}". '
-            "Try to directly answer the question itself in the format specified"
+            f'"{question}". '
         )
 
     summarization_prompt = ChatSequence.for_model(model)
@@ -104,7 +103,7 @@ def summarize_text(
     logger.info(f"Text length: {token_length} tokens")
 
     # reserve 50 tokens for summary prompt, 500 for the response
-    max_chunk_length = _max_chunk_length(model) - 550
+    max_chunk_length = _max_chunk_length(model) - 600
     logger.debug(f"Max chunk length: {max_chunk_length} tokens")
 
     if not must_chunk_content(text, model, max_chunk_length):
@@ -112,21 +111,22 @@ def summarize_text(
         summarization_prompt.add(
             "user",
             # "Write a concise summary of the following text"
-            " Consider yourself as an analyst."
             f"{f'; {instruction}' if instruction is not None else ''}:"
             "\n\n\n"
-            f'LITERAL TEXT: """{text}"""'
+            f'INPUT DATA: """{text}"""'
             "\n\n\n"
-            "CONCISE ANSWER: The question is best answered as."
+            "YOUR Response: The question is best answered as."
             # "Only respond with a concise summary or description of the user message."
         )
 
         logger.debug(f"Summarizing with {model}:\n{summarization_prompt.dump()}\n")
+        # print(f"Summarizing with {model}:\n{summarization_prompt.dump()}\n")
         summary = create_chat_completion(
             prompt=summarization_prompt, config=config, temperature=0, max_tokens=500
         ).content
 
         logger.debug(f"\n{'-'*16} SUMMARY {'-'*17}\n{summary}\n{'-'*42}\n")
+        # print(f"\n{'-'*16} SUMMARY {'-'*17}\n{summary}\n{'-'*42}\n")
         return summary.strip(), None
 
     summaries: list[str] = []
@@ -145,10 +145,59 @@ def summarize_text(
 
     logger.debug(f"Summarized {len(chunks)} chunks")
 
-    summary, _ = summarize_text("\n\n".join(summaries), config)
+    summary, _ = summarise_aggregator("\n\n".join(summaries), config)
     return summary.strip(), [
         (summaries[i], chunks[i][0]) for i in range(0, len(chunks))
     ]
+
+
+def summarise_aggregator(text: str,
+    config: Config,
+    instruction: Optional[str] = None,
+    question: Optional[str] = None,
+) -> tuple[str, None | list[tuple[str, str]]]:
+    if not text:
+        raise ValueError("No text to summarize")
+
+    model = config.fast_llm
+
+    instruction = (
+            f' Summarise all "INPUT TEXT" jsons into one aggregated output json. \n\n'
+            f' For each json element, aggregate multiple values into one single value.'
+            f' In case of numerical values apply a mean and round it. In case of text, Combine into one and summarize.'
+    )
+
+    summarization_prompt = ChatSequence.for_model(model)
+
+    token_length = count_string_tokens(text, model)
+    logger.info(f"Text length: {token_length} tokens")
+    max_chunk_length = _max_chunk_length(model) - 700
+    logger.debug(f"Max chunk length: {max_chunk_length} tokens")
+
+    if must_chunk_content(text, model, max_chunk_length):
+        print("------> THIS BREAKS HERE  <---------")
+
+    summarization_prompt.add(
+        "user",
+        # "Write a concise summary of the following text"
+        f"{f'; {instruction}' if instruction is not None else ''}:"
+        "\n\n\n"
+        f'INPUT DATA: """{text}"""'
+        "\n\n\n"
+        "YOUR Response: The question is best answered as."
+        # "Only respond with a concise summary or description of the user message."
+    )
+
+    logger.debug(f"Summarizing with {model}:\n{summarization_prompt.dump()}\n")
+    # print(f"Summarizing with {model}:\n{summarization_prompt.dump()}\n")
+    summary = create_chat_completion(
+        prompt=summarization_prompt, config=config, temperature=0, max_tokens=500
+    ).content
+
+    logger.debug(f"\n{'-' * 16} SUMMARY {'-' * 17}\n{summary}\n{'-' * 42}\n")
+    # print(f"\n{'-' * 16} SUMMARY {'-' * 17}\n{summary}\n{'-' * 42}\n")
+
+    return summary.strip(), None
 
 
 def split_text(

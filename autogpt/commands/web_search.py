@@ -57,7 +57,6 @@ def web_search(query: str, agent: Agent= None, num_results: int = 8) -> str:
         attempts += 1
 
     results = json.dumps(search_results, ensure_ascii=False, indent=4)
-    print("here")
     return safe_google_results(results)
 
 

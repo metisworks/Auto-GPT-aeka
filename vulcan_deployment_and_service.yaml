@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vulcan
+  namespace: metis
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: vulcan
+  template:
+    metadata:
+      labels:
+        app: vulcan
+    spec:
+      containers:
+      - name: vulcan-app-backend
+        image: 213604382820.dkr.ecr.us-east-1.amazonaws.com/vulcan-app-repo:v0.0.10
+        ports:
+          - containerPort: 5000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vulcan-app
+  namespace: metis
+spec:
+  type: ClusterIP
+  selector:
+    app: vulcan
+  ports:
+    - port: 8080
+      targetPort: 5000
