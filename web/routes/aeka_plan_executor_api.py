@@ -8,6 +8,8 @@ from autogpt.agents.aeka_plan_executor import AekaPlanExecutor
 from typing import List, Annotated
 
 from autogpt.config.gpt_browse_research_plan import GptBrowseResearchPlan
+from autogpt.config.gpt_serp_browse_research_plan import GptSerpBrowseResearchPlan
+
 from mongo_cache.result_obj_db_operations import ResultObjDbOperation
 
 router = APIRouter(prefix="/vulcan/aeka_agent")
@@ -59,11 +61,39 @@ async def sync_execute_srb_request(
     results = sync_api_execution_fn(run_id, search_goal_inp, num_results)
     return results
 
+@router.post(path="/synchronous_gsrp_rb", tags=["aeka_autogpt"])
+async def sync_execute_srb_request(
+        search_goals: Annotated[List[str], Body()],
+        research_goals: Annotated[List[str], Body()],
+        bg_task: BackgroundTasks,
+        num_results: Annotated[int, Body()] = 6
+):
+    search_goal_inp = {
+        "0": search_goals,
+        "1": research_goals
+    }
+    run_id = str(uuid.uuid4())
+    results = sync_serp_api_execution_fn(run_id, search_goal_inp, num_results)
+    return results
+
+
 
 def api_execution(search_goal_inp, num_result=1):
     plan_executor = AekaPlanExecutor("Research Executor")
     print("Plan executor")
     s_b_plan = GptBrowseResearchPlan()
+    s_b_plan.setup_phases(goals_list=search_goal_inp, num_result=num_result)
+    plan_executor.setup_execution_plans(s_b_plan)
+    results = plan_executor.execute()
+    del s_b_plan
+    del plan_executor
+    return results
+
+
+def serp_api_execution(search_goal_inp, num_result=1):
+    plan_executor = AekaPlanExecutor("Research Executor")
+    print("Plan executor")
+    s_b_plan = GptSerpBrowseResearchPlan()
     s_b_plan.setup_phases(goals_list=search_goal_inp, num_result=num_result)
     plan_executor.setup_execution_plans(s_b_plan)
     results = plan_executor.execute()
@@ -84,6 +114,14 @@ async def api_async_fn(run_id, inp, num_results=1):
 
 def sync_api_execution_fn(run_id, inp, num_results=1):
     results = api_execution(inp, num_result=num_results)
+    # local_memory_map[run_id] = await get_request(inp, headers)
+    result_dict = {"goal_results": results}
+    db_ops.add_result_obj(run_id=run_id, input_goals=inp, result=result_dict)
+    return {'run_id': run_id, 'input_goals': inp, 'result': result_dict}
+
+
+def sync_serp_api_execution_fn(run_id, inp, num_results=1):
+    results = serp_api_execution(inp, num_result=num_results)
     # local_memory_map[run_id] = await get_request(inp, headers)
     result_dict = {"goal_results": results}
     db_ops.add_result_obj(run_id=run_id, input_goals=inp, result=result_dict)

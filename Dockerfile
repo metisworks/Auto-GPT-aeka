@@ -24,7 +24,7 @@ ENV PATH="$PATH:/root/.local/bin"
 COPY requirements.txt .
 
 # Set the entrypoint
-ENTRYPOINT ["uvicorn", "web.web-app:app", "--host", "0.0.0.0", "--port","5000","--workers","2"]
+ENTRYPOINT ["uvicorn", "web.web-app:app", "--host", "0.0.0.0", "--port","5000"]
 # release build -> include bare minimum
 FROM autogpt-base as autogpt-release
 RUN sed -i '/Items below this point will not be included in the Docker Image/,$d' requirements.txt && \

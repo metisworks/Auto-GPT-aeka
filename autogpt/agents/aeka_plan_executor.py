@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 from autogpt.config.aeka_execution_plan import ExecutionPlan
 from autogpt.agents.aeka_execution_phase import AekaExecutionPhaseBase
-from autogpt.config.gpt_browse_research_plan import GptBrowseResearchPlan
+from autogpt.config.gpt_serp_browse_research_plan import GptSerpBrowseResearchPlan
 
 
 class AekaPlanExecutor(ABC):
@@ -36,19 +36,22 @@ if __name__ == "__main__":
     # create execution plan
     goals = {
         "0": [
-            "Find the luxury car market  size in usd in india for 2023",
-            "Please prioritise govt agencies reports and reputed statistic sites."
+            "Find the luxury car market  size in usd in india for 2023"
+            ,
+            "Please prioritise govt agencies reports ."
         ],
         "1": [
-            "Whats the luxury automobile market in India for 2023",
+            "Whats the luxury automobile market in India for 2021",
             "Please provide the answer as JSON with keys as year of sales, market size, CAGR"
         ],
 
     }
-    s_b_plan = GptBrowseResearchPlan()
+    s_b_plan = GptSerpBrowseResearchPlan()
     s_b_plan.setup_phases(goals_list=goals)
 
     executor = AekaPlanExecutor("research executor")
     executor.setup_execution_plans(s_b_plan)
-    executor.execute()
+    r3s = executor.execute()
+    print(f" {r3s = }")
+
 

@@ -1,17 +1,18 @@
 from autogpt.agents.aeka_execution_phase import AekaExecutionPhaseBase
 from autogpt.agents.utils.util_method import execute_prompt_chat
 from autogpt.commands.web_search import web_search
+from autogpt.commands.apify_google_search import get_serp_results
 from autogpt.core.aeka_core.aekaExecutionContext import AekaExecutionContext
 from autogpt.logs import logger
 import json
+from apify_client import ApifyClient
 
-
-class AekaExecutionSearchPhase(AekaExecutionPhaseBase):
+class AekaExecutionSerpPhase(AekaExecutionPhaseBase):
     def __init__(self):
         super().__init__()
         self.phase_name = "Search_Execution"
         self.phase_description = "Phase for doing a search"
-        self.command = web_search
+        self.command = get_serp_results
         self.credentials = None
         self.num_result =1
 
@@ -60,11 +61,18 @@ class AekaExecutionSearchPhase(AekaExecutionPhaseBase):
         search_term = execute_prompt_chat(execution_messages)
         print(f" ---> ST {search_term = }")
         # 2. search
-        search_result = self.command(search_term, None,num_results=self.num_result)
-        search_result_obj = json.loads(search_result)
-        logger.debug(f" { search_result = }")
-        print(f" ---> SR { search_result = }")
-        self.result = search_result_obj
+        # add token here
+        apf_tok = ""
+        client = ApifyClient(apf_tok)
+
+        search_result = self.command(client,search_term,self.num_result,1)
+        res_list = []
+        for res in search_result['results'][0]['organicResults']:
+            res['href'] = res['url']
+            res_list.append(res)
+
+        print(f"{res_list = }")
+        self.result = res_list
 
     def get_result(self):
         return self.result
@@ -77,8 +85,9 @@ if __name__ == "__main__":
     context = AekaExecutionContext(context_name="Local Context")
     global_context = AekaExecutionContext(context_name="Global Context")
     global_context.add_message_to_context("Think of yourself as a research analyst", "user")
-    exec_phase = AekaExecutionSearchPhase()
+    exec_phase = AekaExecutionSerpPhase()
     exec_phase.setup(local_context=context, global_context=global_context)
-    goals = ["Find the luxury car market  size in usd in india for 2023",
-             "Please prioritise govt agencies pdf reports and reputed statistic sites."]
+    goals = ["Find the luxury car market  size in usd in india for 2023"]
+        # ,
+        #      "Please prioritise govt agencies pdf reports and reputed statistic sites."]
     exec_phase.execute_phase(input_list=goals)

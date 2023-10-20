@@ -4,7 +4,7 @@ metadata:
   name: vulcan
   namespace: metis
 spec:
-  replicas: 2
+  replicas: 5
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: vulcan-app-backend
-        image: 213604382820.dkr.ecr.us-east-1.amazonaws.com/vulcan-app-repo:v0.0.10
+        image: 213604382820.dkr.ecr.us-east-1.amazonaws.com/vulcan-app-repo:v0.0.14
         ports:
           - containerPort: 5000
 
